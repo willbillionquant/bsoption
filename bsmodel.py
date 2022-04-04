@@ -2,6 +2,7 @@ import sys
 sys.path.append('..')
 
 import numpy as np
+import pandas as pd
 from scipy.stats import norm
 
 import plotly.graph_objects as go
