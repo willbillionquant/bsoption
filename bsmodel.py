@@ -18,8 +18,8 @@ class BSModel():
         self.T = T / 365  # Number of days to expiry
         self.sig = sig  # IV ( 50% = 0.5)
         self.rf = rf  # risk-free rate
-        self.d_1 = self.get_zscore()[0]
-        self.d_2 = self.get_zscore()[1]
+        self.d_1 = self.getzscore()[0]
+        self.d_2 = self.getzscore()[1]
         self.cprice = self.getopprice('C')
         self.pprice = self.getopprice('P')
         self.cdelta = self.getdelta('C')
@@ -29,7 +29,7 @@ class BSModel():
         self.vega = self.S * norm.pdf(self.d_1) * (self.T ** 0.5) / 100
         self.gamma = norm.pdf(self.d_1) / (self.S * self.sig * (self.T ** 0.5))
 
-    def get_zscore(self):
+    def getzscore(self):
         """Compute two essential z-scores for option pricing."""
         d_1 = (np.log(self.S / self.K) + self.T * (self.rf + 0.5 * (self.sig ** 2))) / (self.sig * (self.T ** 0.5))
         d_2 = d_1 - self.sig * (self.T ** 0.5)
