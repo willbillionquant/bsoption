@@ -103,7 +103,7 @@ def getpayoff(strike, preexpiry=False, sig=0.4):
 
     return dfprice
 
-def getivbisect(S, K, T, P, optype, rf=0, lowb=0, upb=200.0, maxstep=20, pcterr=0.001):
+def getivbisect(S, K, T, P, optype, rf=0, lowb=0, upb=400.0, maxstep=20, pcterr=0.001):
     """Obtain an estimate of IV by bisection method."""
     BSstart = BSModel(S, K, T, lowb / 100, rf)  # Lower estimate of original option price
     BSend = BSModel(S, K, T, upb / 100, rf)  # Upper estimate of original option price
