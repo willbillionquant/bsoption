@@ -66,8 +66,8 @@ class BSModel():
             t_2 = self.rf * self.K * np.exp(- self.rf * self.T) * norm.cdf(- self.d_2)
         return (t_1 + t_2) / 365
 
-    def getpayoff(self, preexpiry=False):
-        """Obtain payoff diagram at expiry and (if `preexpiry` enabled) payoff 7, 14, 28, 56 days before expiry."""
+    def getpayoff(self, preexpiry=False, numday=(7, 14, 28, 56)):
+        """Obtain payoff diagram at expiry and (if `preexpiry` enabled) payoff of each given days before expiry."""
         halfplus = lambda x: x if x > 0 else 0
         lowb = self.K * (1 - self.sig / 2)
         upb = self.K * (1 + self.sig / 2)
@@ -82,20 +82,17 @@ class BSModel():
                             row_heights=[0.5, 0.5], specs=[[{"type": "scatter"}]] * 2,
                             subplot_titles=("Call", "Put"))
         fig.add_trace(go.Scatter(x=dfprice['spot'], y=dfprice['expC'],
-                                 mode="lines", name="Call", line_color='#43b117'), row=1, col=1)
+                                 mode="lines", name="Call-Exp", line_color='#43b117'), row=1, col=1)
         fig.add_trace(go.Scatter(x=dfprice['spot'], y=dfprice['expP'],
-                                 mode="lines", name="Put", line_color='#1756b1'), row=2, col=1)
+                                 mode="lines", name="Put-Exp", line_color='#1756b1'), row=2, col=1)
         if preexpiry:
-            dayrange = [7, 14, 28, 56]
-            calldict = {7: '#34dd86', 14: '#34dd5a', 28: '#46dd34', 56: '#81dd34'}
-            putdict = {7: '#4e34dd', 14: '#344edd', 28: '#347edd', 56: '#34acdd'}
-            for day in dayrange:
+            for day in numday:
                 dfprice[f'{day}dayC'] = round(dfprice['spot'].apply(lambda x: BSModel(x, self.K, day, self.sig).cprice), 2)
                 dfprice[f'{day}dayP'] = round(dfprice['spot'].apply(lambda x: BSModel(x, self.K, day, self.sig).pprice), 2)
                 fig.add_trace(go.Scatter(x=dfprice['spot'], y=dfprice[f'{day}dayC'],
-                                         mode="lines+markers", name="Call", line_color=calldict[day]), row=1, col=1)
+                                         mode="lines+markers", name=f"Call-{day}D", line_color='#43b117'), row=1, col=1)
                 fig.add_trace(go.Scatter(x=dfprice['spot'], y=dfprice[f'{day}dayP'],
-                                         mode="lines+markers", name="Put", line_color=putdict[day]), row=2, col=1)
+                                         mode="lines+markers", name=f"Put-{day}D", line_color='#1756b1'), row=2, col=1)
 
         fig.update_layout(height=800, showlegend=False, title_text="Payoff curve", title_x=0.5)
         fig.show()
