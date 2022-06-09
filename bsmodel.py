@@ -1,3 +1,5 @@
+import os
+codepath = os.path.dirname(os.path.abspath(__file__))
 import sys
 sys.path.append('..')
 
@@ -27,8 +29,8 @@ class BSModel():
         self.pdelta = self.getdelta('P')
         self.ctheta = self.gettheta('C')
         self.ptheta = self.gettheta('P')
-        self.vega = self.S * norm.pdf(self.d_1) * (self.T ** 0.5) / 100
-        self.gamma = norm.pdf(self.d_1) / (self.S * self.sig * (self.T ** 0.5))
+        self.vega = round(self.S * norm.pdf(self.d_1) * (self.T ** 0.5) / 100, 6)
+        self.gamma = round(norm.pdf(self.d_1) / (self.S * self.sig * (self.T ** 0.5)), 8)
 
     def getzscore(self):
         """Compute two essential z-scores for option pricing."""
@@ -42,9 +44,9 @@ class BSModel():
         if optype == 'C':
             opprice = self.S * norm.cdf(self.d_1, 0, 1) - self.K * np.exp(- self.rf * self.T) * norm.cdf(self.d_2, 0, 1)
         else:
-            opprice = self.K * np.exp(- self.rf * self.T) * norm.cdf(-self.d_2, 0, 1) - self.S * norm.cdf(-self.d_1, 0,
-                                                                                                          1)
-        return opprice
+            opprice = self.K * np.exp(- self.rf * self.T) * norm.cdf(-self.d_2, 0, 1) - self.S * norm.cdf(-self.d_1, 0, 1)
+
+        return round(opprice, 4)
 
     def getdelta(self, optype):
         """Return call or put delta = inceremental change per unit increment in underlying."""
@@ -53,7 +55,7 @@ class BSModel():
             delta = norm.cdf(self.d_1)
         else:
             delta = norm.cdf(self.d_1) - 1
-        return delta
+        return round(delta, 6)
 
     def gettheta(self, optype):
         """Return call or put theta = time value per day."""
@@ -64,7 +66,7 @@ class BSModel():
         else:
             t_1 = - self.S * norm.pdf(self.d_1) * self.sig / (2 * (self.T) ** 0.5)
             t_2 = self.rf * self.K * np.exp(- self.rf * self.T) * norm.cdf(- self.d_2)
-        return (t_1 + t_2) / 365
+        return round((t_1 + t_2) / 365, 6)
 
     def getpayoff(self, preexpiry=False, numday=(7, 14, 28, 56), opside='LONG'):
         """Obtain payoff diagram at expiry and (if `preexpiry` enabled) payoff of each given days before expiry."""
@@ -103,8 +105,6 @@ class BSModel():
 
         fig.update_layout(height=800, showlegend=False, title_text="Payoff curve", title_x=0.5)
         fig.show()
-
-        return dfprice
 
 def getivbisect(S, K, T, P, optype, rf=0, lowb=0, upb=400.0, maxstep=20, pcterr=0.001):
     """Obtain an estimate of IV by bisection method."""
