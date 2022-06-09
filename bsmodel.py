@@ -66,8 +66,9 @@ class BSModel():
             t_2 = self.rf * self.K * np.exp(- self.rf * self.T) * norm.cdf(- self.d_2)
         return (t_1 + t_2) / 365
 
-    def getpayoff(self, preexpiry=False, numday=(7, 14, 28, 56)):
+    def getpayoff(self, preexpiry=False, numday=(7, 14, 28, 56), opside='LONG'):
         """Obtain payoff diagram at expiry and (if `preexpiry` enabled) payoff of each given days before expiry."""
+        assert opside in ['LONG', 'SHORT'], AttributeError('opside must be LONG or SHORT!')
         halfplus = lambda x: x if x > 0 else 0
         lowb = self.K * (1 - self.sig / 2)
         upb = self.K * (1 + self.sig / 2)
@@ -77,6 +78,9 @@ class BSModel():
         dfprice['spot'] = pricearr
         dfprice['expC'] = (dfprice['spot'] - self.K).apply(halfplus)
         dfprice['expP'] = (self.K - dfprice['spot']).apply(halfplus)
+        if opside == 'SHORT':
+            dfprice['expC'] *= -1
+            dfprice['expP'] *= -1
         # Add payoff plots
         fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05,
                             row_heights=[0.5, 0.5], specs=[[{"type": "scatter"}]] * 2,
@@ -89,6 +93,9 @@ class BSModel():
             for day in numday:
                 dfprice[f'{day}dayC'] = round(dfprice['spot'].apply(lambda x: BSModel(x, self.K, day, self.sig).cprice), 2)
                 dfprice[f'{day}dayP'] = round(dfprice['spot'].apply(lambda x: BSModel(x, self.K, day, self.sig).pprice), 2)
+                if opside == 'SHORT':
+                    dfprice[f'{day}dayC'] *= -1
+                    dfprice[f'{day}dayP'] *= -1
                 fig.add_trace(go.Scatter(x=dfprice['spot'], y=dfprice[f'{day}dayC'],
                                          mode="lines+markers", name=f"Call-{day}D", line_color='#43b117'), row=1, col=1)
                 fig.add_trace(go.Scatter(x=dfprice['spot'], y=dfprice[f'{day}dayP'],
