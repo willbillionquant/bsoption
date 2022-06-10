@@ -67,7 +67,7 @@ class Opduo():
 
         return stratprice, delta, theta, vega, gamma
 
-    def getpayoff(self, preexpiry=False, numday=(7, 14, 28, 56), opside='LONG'):
+    def getpayoff(self, preexpiry=False, numday=(7, 21, 63), opside='LONG'):
         """Obtain payoff diagram at expiry and (if `preexpiry` enabled) payoff of each given days before expiry."""
         # Assert combo side
         assert opside in ['LONG', 'SHORT'], AttributeError('opside must be LONG or SHORT!')
@@ -112,7 +112,7 @@ class Opduo():
                 if opside == 'SHORT':
                     dfprice[f'{day}day'] *= -1
                 fig.add_trace(go.Scatter(x=dfprice['spot'], y=dfprice[f'{day}day'],
-                                         mode="lines", name=f"{day}D", line_color='#d516cc'), row=1, col=1)
+                                         mode="markers", name=f"{day}D", line_color='#d516cc'), row=1, col=1)
         # Chart title
         fig.update_layout(height=800, showlegend=False, title_x=0.5,
                           title_text=f'{opside}-{self.strat}-{self.str1}{self.op1}-{self.str2}{self.op2}')
