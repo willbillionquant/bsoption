@@ -68,13 +68,13 @@ class BSModel():
             t_2 = self.rf * self.K * np.exp(- self.rf * self.T) * norm.cdf(- self.d_2)
         return round((t_1 + t_2) / 365, 6)
 
-    def getpayoff(self, preexpiry=False, numday=(7, 14, 28, 56), opside='LONG'):
+    def getpayoff(self, preexpiry=False, numday=(7, 28, 56), opside='LONG'):
         """Obtain payoff diagram at expiry and (if `preexpiry` enabled) payoff of each given days before expiry."""
         assert opside in ['LONG', 'SHORT'], AttributeError('opside must be LONG or SHORT!')
         halfplus = lambda x: x if x > 0 else 0
         lowb = self.K * (1 - self.sig / 2)
         upb = self.K * (1 + self.sig / 2)
-        pricearr = np.linspace(lowb, upb, 11)
+        pricearr = np.linspace(lowb, upb, 100)
         # Payoff Dataframe: call & put at expiry
         dfprice = pd.DataFrame(columns=['spot', 'expC', 'expP'])
         dfprice['spot'] = pricearr
@@ -99,11 +99,11 @@ class BSModel():
                     dfprice[f'{day}dayC'] *= -1
                     dfprice[f'{day}dayP'] *= -1
                 fig.add_trace(go.Scatter(x=dfprice['spot'], y=dfprice[f'{day}dayC'],
-                                         mode="lines+markers", name=f"Call-{day}D", line_color='#43b117'), row=1, col=1)
+                                         mode="markers", name=f"Call-{day}D", line_color='#d516cc'), row=1, col=1)
                 fig.add_trace(go.Scatter(x=dfprice['spot'], y=dfprice[f'{day}dayP'],
-                                         mode="lines+markers", name=f"Put-{day}D", line_color='#1756b1'), row=2, col=1)
+                                         mode="markers", name=f"Put-{day}D", line_color='#d51653'), row=2, col=1)
 
-        fig.update_layout(height=800, showlegend=False, title_text="Payoff curve", title_x=0.5)
+        fig.update_layout(height=800, showlegend=False, title_text=f'{opside}-side Payoff curve', title_x=0.5)
         fig.show()
 
 def getivbisect(S, K, T, P, optype, rf=0, lowb=0, upb=400.0, maxstep=20, pcterr=0.001):
