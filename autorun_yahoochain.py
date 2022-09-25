@@ -24,11 +24,13 @@ if not os.path.exists(logchainpath):
 logfile = os.path.join(logchainpath, f'yahoochain_{currenttime}.txt')
 logging.basicConfig(filename=logfile, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-
 configassets = configchain['assets']
 etflist = list(configassets.get('etf').split(','))
 chipslist = list(configassets.get('chip').split(','))
 assetlist = etflist + chipslist
+
+from bsoption.nyopchain import NYopchain
+Opchain = NYopchain()
 
 def getchain(asset):
     """Download option chain from yahoo finance API."""
@@ -86,6 +88,16 @@ def getchain(asset):
     masterwriter.save()
 
     return chaindict
+
+def opchainflow():
+    """Download option chain and append to database."""
+    for asset in assetlist:
+        try:
+            dfchain = Opchain.getopchainyahoo(asset)
+            Opchain.appendchaindf(dfchain)
+            logging.info(f'Successfully download & append option chain of {asset}.')
+        except:
+            logging.info(f'Error in handling option chain of {asset}.')
 
 if __name__ == '__main__':
     logging.info('START Yahoo Finance option chain workflow.')
