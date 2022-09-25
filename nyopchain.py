@@ -3,7 +3,7 @@ codepath = os.path.dirname(os.path.abspath(__file__))
 import sys
 sys.path.append('..')
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 from sqlalchemy import create_engine
@@ -35,7 +35,7 @@ class NYopchain():
     def __init__(self):
         self.engine = create_engine(f'sqlite:///{os.path.join(chainpath, "nyopchain.db")}')
         self.collist = ['tradedate', 'asset', 'optype', 'expiry', 'strike', 'iv', 'vol', 'oi', 'last', 'bid', 'ask', 'mid']
-        self.colstr = ', '.join(self.collist)
+        self.colstr = ','.join(self.collist)
 
     def getopchainyahoo(self, asset):
         """Obtain most recent trading day option chain data from yahoo finance API."""
@@ -84,8 +84,10 @@ class NYopchain():
         stmtselect = f" SELECT {self.colstr} FROM `{inputdict['asset']}` \
                         WHERE ((`optype` = '{inputdict['optype'][0]}') OR (`optype` = '{inputdict['optype'][1]}')) \
                         AND `strike` between {inputdict['strike_lowerbound']} and {inputdict['strike_upperbound']} \
-                        AND `tradedate` between '{getdayslater(inputdict['startdate'])}' \
-                        and '{getdayslater(inputdict['enddate'], 1)}' \
+                        AND `expiry` between '{getdayslater(inputdict['startexpiry'])}' \
+                        and '{getdayslater(inputdict['endexpiry'], 1)}' \
+                        AND `tradedate` between '{getdayslater(inputdict['starttd'])}' \
+                        and '{getdayslater(inputdict['endtd'], 1)}' \
                         ORDER BY {', '.join(orderfield)}"
 
         with self.engine.connect() as con:
