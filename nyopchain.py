@@ -35,7 +35,7 @@ class NYopchain():
     def __init__(self):
         self.engine = create_engine(f'sqlite:///{os.path.join(chainpath, "nyopchain.db")}')
         self.collist = ['tradedate', 'asset', 'optype', 'expiry', 'strike', 'iv', 'vol', 'oi', 'last', 'bid', 'ask', 'mid']
-        self.colstr = ','.join(self.collist)
+        self.colstr = '`' + '`, `'.join(self.collist) + '`'
 
     def getopchainyahoo(self, asset):
         """Obtain most recent trading day option chain data from yahoo finance API."""
@@ -54,13 +54,15 @@ class NYopchain():
             dfput['optype'] = 'P'
             renamedict = {'lastPrice': 'last', 'volume': 'vol', 'openInterest': 'oi', 'impliedVolatility': 'iv'}
             for df in [dfcall, dfput]:
-                df.drop(['contractSymbol','lastTradeDate','inTheMoney','contractSize','currency','change','percentChange'],
+                df.drop(['contractSymbol', 'lastTradeDate', 'inTheMoney', 'contractSize', 'currency', 'change',
+                         'percentChange'],
                         axis=1, inplace=True)
                 df.rename(columns=renamedict, inplace=True)
                 df['asset'] = asset
                 df['expiry'] = expday
             dfchain = pd.concat([dfcall, dfput], axis=0)
             dfchain['tradedate'] = lasttd
+            dfchain['tradedate'] = pd.to_datetime(dfchain['tradedate'])
             dfchain = dfchain[self.collist[:-1]]
             for col in self.collist[4:-1]:
                 dfchain[col] = pd.to_numeric(dfchain[col])
@@ -93,12 +95,12 @@ class NYopchain():
         with self.engine.connect() as con:
             result = con.execute(stmtselect).fetchall()
 
-        dfdata = pd.DataFrame(result, columns=self.colstr)
+        dfdata = pd.DataFrame(result, columns=self.collist)
 
         for col in ['tradedate', 'expiry']:
             dfdata[col] = pd.to_datetime(dfdata[col])
 
-        for col in self.colstr[4:]:
+        for col in self.collist[4:]:
             dfdata[col] = pd.to_numeric(dfdata[col])
 
         return dfdata
