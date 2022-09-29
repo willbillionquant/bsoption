@@ -30,7 +30,7 @@ class BSModel():
         self.ctheta = self.gettheta('C')
         self.ptheta = self.gettheta('P')
         self.vega = round(self.S * norm.pdf(self.d_1) * (self.T ** 0.5) / 100, 6)
-        self.gamma = round(norm.pdf(self.d_1) / (self.S * self.sig * (self.T ** 0.5)), 8)
+        self.gamma = round(norm.pdf(self.d_1) / (self.S * self.sig * (self.T ** 0.5)), 9)
 
     def getzscore(self):
         """Compute two essential z-scores for option pricing."""
@@ -143,9 +143,9 @@ def getivbisect(S, K, T, P, optype, rf=0, lowb=0, upb=400.0, maxstep=20, pcterr=
 
 def getoneopcurve(dfop, opfield, spotfield='ftclose', uptoexpiry=True):
     """Obtain option price curve."""
-    fig = make_subplots(rows=6, cols=1, shared_xaxes=True, vertical_spacing=0.05,
-                        row_heights=[0.36, 0.24, 0.1, 0.1, 0.1, 0.1], specs=[[{"type": "scatter"}]] * 6,
-                        subplot_titles=("Option price", "Underlying", "IV", "Delta", "Theta", "Vega"))
+    fig = make_subplots(rows=7, cols=1, shared_xaxes=True, vertical_spacing=0.05,
+                        row_heights=[0.25, 0.15, 0.1, 0.1, 0.1, 0.1, 0.1], specs=[[{"type": "scatter"}]] * 7,
+                        subplot_titles=("Option price", "Underlying", "IV", "Delta", "Theta", "Vega", "Gamma"))
     # Option price curve
     fig.add_trace(go.Scatter(x=dfop.index, y=dfop[opfield],
                              mode="lines", name="Option Price", line_color='#43b117'), row=1, col=1)
@@ -168,12 +168,16 @@ def getoneopcurve(dfop, opfield, spotfield='ftclose', uptoexpiry=True):
         # Theta curve
         fig.add_trace(go.Scatter(x=dfop.index, y=dfop['theta'],
                                  mode="lines", name="Theta", line_color='#c50c47'), row=5, col=1)
-        # Delta curve
+    # Delta curve
     fig.add_trace(go.Scatter(x=dfop.index, y=dfop['delta'],
                              mode="lines", name="Delta", line_color='#60dd34'), row=4, col=1)
     # Vega curve
     fig.add_trace(go.Scatter(x=dfop.index, y=dfop['vega'],
                              mode="lines", name="Vega", line_color='#acdd34'), row=6, col=1)
+
+    # Gamma curve
+    fig.add_trace(go.Scatter(x=dfop.index, y=dfop['gamma'],
+                             mode="lines", name="Gamma", line_color='#1956ee'), row=7, col=1)
 
     # Chart title
     fig.update_layout(height=800, showlegend=False, title_text="Option Price curve", title_x=0.5)
