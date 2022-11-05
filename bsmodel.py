@@ -183,4 +183,3 @@ def getoneopcurve(dfop, opfield, spotfield='ftclose', uptoexpiry=True):
     fig.update_layout(height=800, showlegend=False, title_text="Option Price curve", title_x=0.5)
     fig.show()
 
-
