@@ -22,7 +22,7 @@ def getgex(dfchain, spotprice, ptfactor=100, decplace=4):
 
     return dfgex
 
-def getnewgex(dfgex, info, spotprice=180, ptfactor=100, decplace=4):
+def getnewgex(dfgex, info, spotprice, ptfactor=100, decplace=4):
     """Obtain total GEX of an option chain with arbitary underlying price."""
     # Alter underlying price
     dfnewgex = dfgex.copy()
