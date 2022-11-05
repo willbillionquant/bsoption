@@ -110,7 +110,8 @@ class NYopchain():
     def loaddayopchain(self, dfohlc, tradeday='2022-08-01', expiry='2022-12-31', asset='NVDA',  opbound=0.05):
         """Obtain all options of the same expiry with greeks."""
         # inputdict for `.loadopdata()` method and query
-        inputdict = {'asset': asset,  'optype': ('C', 'P'), 'startexpiry': expiry,  'endexpiry': expiry,  'starttd': tradeday,  'endtd': tradeday}
+        inputdict = {'asset': asset,  'optype': ('C', 'P'),  'strike_lowerbound': 0, 'strike_upperbound': 100000,
+                     'startexpiry': expiry,  'endexpiry': expiry,  'starttd': tradeday,  'endtd': tradeday}
         dfop = self.loadopdata(inputdict)
         # Filter strike price with BOTH call & put price over 1.00
         dfcall = dfop[(dfop['optype'] == 'C') & (dfop['mid'] >= opbound)]
@@ -118,11 +119,13 @@ class NYopchain():
         strikeset = set(dfcall['strike']).intersection(set(dfput['strike']))
         dfop = dfop[dfop['strike'].isin(strikeset)]
         # Underlying close price
-        spotprice = dfohlc.loc[daystr, f'{asset}_cl']
+        spotprice = dfohlc.loc[tradeday, f'{asset}_cl']
         # Tuple to record underlying info
         tradedate = datetime.strptime(tradeday, '%Y-%m-%d')
         expirydate = datetime.strptime(expiry, '%Y-%m-%d')
         info = (asset, tradedate, expirydate, spotprice)
+        # Drop columns with duplicate or unnecessary info
+        dfop.drop(['tradedate', 'asset', 'expiry', 'last', 'bid', 'ask'], axis=1, inplace=True)
         # Dummy column of `BSmodel()` object
         tdays = (expirydate - tradedate).days
         dfop['BS'] = dfop.apply(lambda row: BSModel(spotprice, row['strike'], tdays, row['iv'] / 100), axis=1)
@@ -133,11 +136,16 @@ class NYopchain():
         dfcall['theta'] = dfcall['BS'].apply(lambda x: x.ctheta)
         dfput['delta'] = dfput['BS'].apply(lambda x: x.pdelta)
         dfput['theta'] = dfput['BS'].apply(lambda x: x.ptheta)
-        dfop = pd.concat([dfcall, dfput], axis=0)
-        # Compute vega & gamma columns (irrelevant of call/put)
-        dfop['vega'] = dfop['BS'].apply(lambda x: x.vega)
-        dfop['gamma'] = dfop['BS'].apply(lambda x: x.gamma)
-        # Drop dummy column
-        dfop.drop('BS', axis=1, inplace=True)
-        
+        # Compute vega & gamma columns (irrelevant of call/put), set strike column as index, and then drop dummy and optype column
+        for df in [dfcall, dfput]:
+            df['vega'] = df['BS'].apply(lambda x: x.vega)
+            df['gamma'] = df['BS'].apply(lambda x: x.gamma)
+            df.set_index('strike', inplace=True)
+            df.drop(['BS', 'optype'], axis=1, inplace=True)
+        # Rename columns to separate call & put (in the result dataframe)
+        dfcall.rename(columns={field: f'c_{field}' for field in dfcall.columns}, inplace=True)
+        dfput.rename(columns={field: f'p_{field}' for field in dfput.columns}, inplace=True)
+        # Concat call and put dataframes
+        dfop = pd.concat([dfcall, dfput], axis=1)
+
         return dfop, info
