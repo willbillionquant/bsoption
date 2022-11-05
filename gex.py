@@ -78,7 +78,7 @@ def plotgex(dfgex, info):
     fig.update_layout(title=titletext, title_x=0.5, width=1000, height=800)
     fig.show()
 
-def get0gamma(dfchain, info, ptfactor=100, rangefactor=0.125, gridfactor=0.0125):
+def get0gamma(dfchain, info, ptfactor=100, rangefactor=0.125, gridfactor=0.0125, plot=True):
     """Obtain zero gamma level."""
     # GEX according to true underlying price
     spotprice = info[-1]
@@ -109,22 +109,23 @@ def get0gamma(dfchain, info, ptfactor=100, rangefactor=0.125, gridfactor=0.0125)
             else:
                 zerogexlevel = p2
     # Visualize GEX at different spot price
-    fig = make_subplots(rows=1, cols=1, shared_xaxes=True, row_heights=[6.0], specs=[[{"type": "scatter"}]])
+    if plot:
+        fig = make_subplots(rows=1, cols=1, shared_xaxes=True, row_heights=[6.0], specs=[[{"type": "scatter"}]])
 
-    fig.add_trace(go.Scatter(x=dfsumgex.index, y=dfsumgex['GEX'], mode='lines+markers', name='spot levels'),
-                  row=1, col=1)
+        fig.add_trace(go.Scatter(x=dfsumgex.index, y=dfsumgex['GEX'], mode='lines+markers', name='spot levels'),
+                      row=1, col=1)
 
-    fig.add_trace(go.Scatter(x=[spotprice], y=[ngex0], mode='markers', name='spot price',
-                             marker=dict(size=20, color='#66dc19')), row=1, col=1)
+        fig.add_trace(go.Scatter(x=[spotprice], y=[ngex0], mode='markers', name='spot price',
+                                 marker=dict(size=20, color='#66dc19')), row=1, col=1)
 
-    if zerogexlevel != None:
-        fig.add_trace(go.Scatter(x=[zerogexlevel], y=[0], mode='markers', name='0-gamma level',
-                                 marker=dict(size=20, color=' #ee195a')), row=1, col=1)
+        if zerogexlevel != None:
+            fig.add_trace(go.Scatter(x=[zerogexlevel], y=[0], mode='markers', name='0-gamma level',
+                                     marker=dict(size=20, color=' #ee195a')), row=1, col=1)
 
-    tdstr = info[1].strftime('%Y-%m-%d')
-    expiry = info[2].strftime('%Y-%m-%d')
-    fig.update_layout(title=f'Gamma levels of {info[0]} of expiry {expiry} on {tdstr}',
-                      title_x=0.5, width=1000, height=800)
-    fig.show()
+        tdstr = info[1].strftime('%Y-%m-%d')
+        expiry = info[2].strftime('%Y-%m-%d')
+        fig.update_layout(title=f'Gamma levels of {info[0]} of expiry {expiry} on {tdstr}',
+                          title_x=0.5, width=1000, height=800)
+        fig.show()
 
     return dfsumgex, zerogexlevel
