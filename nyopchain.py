@@ -13,13 +13,15 @@ configchain = ConfigParser()
 configchain.read(os.path.join(codepath, 'setting_yahoochain.ini'))
 chainpath = configchain['paths'].get('chainpath')
 
+import yfinance as yf
+
+from bsoption.bsmodel import BSModel
+
 import logging
 currenttime = datetime.now().strftime('%Y%m%d')
 logchainpath = os.path.join(chainpath, 'logs')
 if not os.path.exists(logchainpath):
     os.makedirs(logchainpath)
-
-import yfinance as yf
 
 logfile = os.path.join(logchainpath, f'yahoochain_{currenttime}.txt')
 logging.basicConfig(filename=logfile, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -104,3 +106,38 @@ class NYopchain():
             dfdata[col] = pd.to_numeric(dfdata[col])
 
         return dfdata
+
+    def loaddayopchain(self, dfohlc, tradeday='2022-08-01', expiry='2022-12-31', asset='NVDA',  opbound=0.05):
+        """Obtain all options of the same expiry with greeks."""
+        # inputdict for `.loadopdata()` method and query
+        inputdict = {'asset': asset,  'optype': ('C', 'P'), 'startexpiry': expiry,  'endexpiry': expiry,  'starttd': tradeday,  'endtd': tradeday}
+        dfop = self.loadopdata(inputdict)
+        # Filter strike price with BOTH call & put price over 1.00
+        dfcall = dfop[(dfop['optype'] == 'C') & (dfop['mid'] >= opbound)]
+        dfput = dfop[(dfop['optype'] == 'P') & (dfop['mid'] >= opbound)]
+        strikeset = set(dfcall['strike']).intersection(set(dfput['strike']))
+        dfop = dfop[dfop['strike'].isin(strikeset)]
+        # Underlying close price
+        spotprice = dfohlc.loc[daystr, f'{asset}_cl']
+        # Tuple to record underlying info
+        tradedate = datetime.strptime(tradeday, '%Y-%m-%d')
+        expirydate = datetime.strptime(expiry, '%Y-%m-%d')
+        info = (asset, tradedate, expirydate, spotprice)
+        # Dummy column of `BSmodel()` object
+        tdays = (expirydate - tradedate).days
+        dfop['BS'] = dfop.apply(lambda row: BSModel(spotprice, row['strike'], tdays, row['iv'] / 100), axis=1)
+        # split option dataframe into call & put and compute delta and theta separately
+        dfcall = dfop[dfop['optype'] == 'C']
+        dfput = dfop[dfop['optype'] == 'P']
+        dfcall['delta'] = dfcall['BS'].apply(lambda x: x.cdelta)
+        dfcall['theta'] = dfcall['BS'].apply(lambda x: x.ctheta)
+        dfput['delta'] = dfput['BS'].apply(lambda x: x.pdelta)
+        dfput['theta'] = dfput['BS'].apply(lambda x: x.ptheta)
+        dfop = pd.concat([dfcall, dfput], axis=0)
+        # Compute vega & gamma columns (irrelevant of call/put)
+        dfop['vega'] = dfop['BS'].apply(lambda x: x.vega)
+        dfop['gamma'] = dfop['BS'].apply(lambda x: x.gamma)
+        # Drop dummy column
+        dfop.drop('BS', axis=1, inplace=True)
+        
+        return dfop, info
