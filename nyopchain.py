@@ -36,8 +36,10 @@ class NYopchain():
 
     def __init__(self):
         self.engine = create_engine(f'sqlite:///{os.path.join(chainpath, "nyopchain.db")}')
-        self.collist = ['tradedate', 'asset', 'optype', 'expiry', 'strike', 'iv', 'vol', 'oi', 'last', 'bid', 'ask', 'mid']
+        self.collist = ['tradedate', 'asset', 'optype', 'expiry', 'strike', 'iv', 'vol', 'oi',
+                        'last', 'bid', 'ask', 'mid']
         self.colstr = '`' + '`, `'.join(self.collist) + '`'
+        self.assetlist = self.engine.table_names()
 
     def getopchainyahoo(self, asset):
         """Obtain most recent trading day option chain data from yahoo finance API."""
