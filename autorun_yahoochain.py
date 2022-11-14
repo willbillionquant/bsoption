@@ -24,10 +24,8 @@ logging.basicConfig(filename=logfile, level=logging.INFO, format='%(asctime)s - 
 
 def opchainflow(assetlist):
     """Download option chain and append to database."""
-    today = (datetime.today() - timedelta(hours=6)).strftime('%Y-%m-%d')
-    tdlist = gettradedays(holidaydictny)
-    lasttd = [dtstr for dtstr in tdlist if dtstr < today][-1]
-    ltddate = datetime.strptime(lasttd, '%Y-%m-%d')
+    ltdstr = getltdate(holidaydictny)
+    ltddate = datetime.strptime(ltdstr, '%Y-%m-%d')
     nextexpiry = (ltddate + timedelta(days=7)).strftime('%Y-%m-%d')
     next2expiry = (ltddate + timedelta(days=36)).strftime('%Y-%m-%d')
     tablelist = Opchain.engine.table_names()
@@ -41,18 +39,18 @@ def opchainflow(assetlist):
                 inputdict = {'asset': asset, 'optype': ('C', 'P'),
                              'strike_lowerbound': 0, 'strike_upperbound': 1000,
                              'startexpiry': nextexpiry, 'endexpiry': next2expiry,
-                             'starttd': lasttd, 'endtd': lasttd}
+                             'starttd': ltdstr, 'endtd': ltdstr}
                 dfop = Opchain.loadopdata(inputdict)
                 if dfop.shape[0] == 0:
                     needupdate = True
             if needupdate:
                 dfchain = Opchain.getopchainyahoo(asset)
                 Opchain.appendchaindf(dfchain)
-                logging.info(f'Successfully download & append latest option chain of {asset} on {lasttd}.')
+                logging.info(f'Successfully download & append latest option chain of {asset} on {ltdstr}.')
             else:
-                logging.info(f'Latest option chain of {asset} on {lasttd} already available.')
+                logging.info(f'Latest option chain of {asset} on {ltdstr} already available.')
         except:
-            logging.info(f'Error in appending latest option chain of {asset} on {lasttd}.')
+            logging.info(f'Error in appending latest option chain of {asset} on {ltdstr}.')
 
 if __name__ == '__main__':
     logging.info('START Yahoo Finance option chain workflow.')
