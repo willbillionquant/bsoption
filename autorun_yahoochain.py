@@ -14,7 +14,7 @@ etflist = list(configassets.get('etf').split(','))
 chipslist = list(configassets.get('chip').split(','))
 assetlist = etflist + chipslist
 
-from litedata import holidaydictny, gettradedays
+from litedata import *
 from bsoption.nyopchain import *
 Opchain = NYopchain()
 
