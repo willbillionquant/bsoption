@@ -1,5 +1,5 @@
 import os
-codepath = os.path.dirname(os.path.abspath(__file__))
+codepath_bsoption = os.path.dirname(os.path.abspath(__file__))
 import sys
 sys.path.append('..')
 
