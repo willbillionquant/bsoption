@@ -1,6 +1,9 @@
+import os
+codepath_bsoption = os.path.dirname(os.path.abspath(__file__))
 import sys
 sys.path.append('..')
 
+from bsoption import *
 from bsoption.bsmodel import *
 
 stratdict = {
