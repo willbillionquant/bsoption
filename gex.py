@@ -11,18 +11,18 @@ from plotly.subplots import make_subplots
 
 from bsoption.bsmodel import BSModel
 
-def getgex(dfchain, spotprice, ptfactor=100, decplace=4):
+def getgex(dfchain, spotprice, ptfactor=100, decplace=4, oifield='oi'):
     """Obtain gamma exposure of each option contract per 1% move of underlying."""
     dfgex = dfchain.copy()
-    dfgex['c_GEX'] = dfgex['c_gamma'] * dfgex['c_oi'] * ptfactor * spotprice / 100
-    dfgex['p_GEX'] = -dfgex['p_gamma'] * dfgex['p_oi'] * ptfactor * spotprice / 100
+    dfgex['c_GEX'] = dfgex['c_gamma'] * dfgex[f'c_{oifield}'] * ptfactor * spotprice / 100
+    dfgex['p_GEX'] = -dfgex['p_gamma'] * dfgex[f'p_{oifield}'] * ptfactor * spotprice / 100
     dfgex['GEX'] = dfgex['c_GEX'] + dfgex['p_GEX']
     for col in ['c_GEX', 'p_GEX', 'GEX']:
         dfgex[col] = np.round(dfgex[col], decplace)
 
     return dfgex
 
-def getnewgex(dfgex, info, spotprice, ptfactor=100, decplace=4):
+def getnewgex(dfgex, info, spotprice, ptfactor=100, decplace=4, oifield='oi'):
     """Obtain total GEX of an option chain with arbitary underlying price."""
     # Alter underlying price
     dfnewgex = dfgex.copy()
@@ -38,8 +38,8 @@ def getnewgex(dfgex, info, spotprice, ptfactor=100, decplace=4):
     dfnewgex['p_delta'] = np.round(colbs_p.apply(lambda x: x.pdelta), 4)
     dfnewgex['p_gamma'] = colbs_p.apply(lambda x: x.gamma)
     # GEX
-    dfnewgex['c_GEX'] = np.round(dfnewgex['c_gamma'] * dfnewgex['c_oi'] * ptfactor * spotprice / 100, decplace)
-    dfnewgex['p_GEX'] = np.round(dfnewgex['p_gamma'] * dfnewgex['p_oi'] * ptfactor * -1 * spotprice / 100, decplace)
+    dfnewgex['c_GEX'] = np.round(dfnewgex['c_gamma'] * dfnewgex[f'c_{oifield}'] * ptfactor * spotprice / 100, decplace)
+    dfnewgex['p_GEX'] = np.round(dfnewgex['p_gamma'] * dfnewgex[f'p_{oifield}'] * ptfactor * -1 * spotprice / 100, decplace)
     dfnewgex['GEX'] = np.round(dfnewgex['c_GEX'] + dfnewgex['p_GEX'], decplace)
     # Set back `strike` as index
     dfnewgex.set_index('strike', inplace=True)
