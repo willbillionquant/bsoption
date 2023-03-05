@@ -23,14 +23,14 @@ class BSModel():
         self.rf = rf  # risk-free rate
         self.d_1 = self.getzscore()[0]
         self.d_2 = self.getzscore()[1]
-        self.cprice = self.getopprice('C')
-        self.pprice = self.getopprice('P')
-        self.cdelta = self.getdelta('C')
-        self.pdelta = self.getdelta('P')
-        self.ctheta = self.gettheta('C')
-        self.ptheta = self.gettheta('P')
-        self.vega = round(self.S * norm.pdf(self.d_1) * (self.T ** 0.5) / 100, 6)
-        self.gamma = round(norm.pdf(self.d_1) / (self.S * self.sig * (self.T ** 0.5)), 9)
+        self.cPrice = self.getOpPrice('C')
+        self.pPrice = self.getOpPrice('P')
+        self.cDelta = self.getDelta('C')
+        self.pDelta = self.getDelta('P')
+        self.cTheta = self.getTheta('C')
+        self.pTheta = self.getTheta('P')
+        self.Vega = round(self.S * norm.pdf(self.d_1) * (self.T ** 0.5) / 100, 6)
+        self.Gamma = round(norm.pdf(self.d_1) / (self.S * self.sig * (self.T ** 0.5)), 9)
 
     def getzscore(self):
         """Compute two essential z-scores for option pricing."""
@@ -38,17 +38,17 @@ class BSModel():
         d_2 = d_1 - self.sig * (self.T ** 0.5)
         return d_1, d_2
 
-    def getopprice(self, optype):
+    def getOpPrice(self, optype):
         """Compute option price by Black-Scholes Model."""
         assert optype in ['C', 'P'], AttributeError('Must be call or put!')
         if optype == 'C':
-            opprice = self.S * norm.cdf(self.d_1, 0, 1) - self.K * np.exp(- self.rf * self.T) * norm.cdf(self.d_2, 0, 1)
+            opPrice = self.S * norm.cdf(self.d_1, 0, 1) - self.K * np.exp(- self.rf * self.T) * norm.cdf(self.d_2, 0, 1)
         else:
-            opprice = self.K * np.exp(- self.rf * self.T) * norm.cdf(-self.d_2, 0, 1) - self.S * norm.cdf(-self.d_1, 0, 1)
+            opPrice = self.K * np.exp(- self.rf * self.T) * norm.cdf(-self.d_2, 0, 1) - self.S * norm.cdf(-self.d_1, 0, 1)
 
-        return round(opprice, 4)
+        return round(opPrice, 4)
 
-    def getdelta(self, optype):
+    def getDelta(self, optype):
         """Return call or put delta = inceremental change per unit increment in underlying."""
         assert optype in ['C', 'P'], AttributeError('Must be call or put!')
         if optype == 'C':
@@ -57,7 +57,7 @@ class BSModel():
             delta = norm.cdf(self.d_1) - 1
         return round(delta, 6)
 
-    def gettheta(self, optype):
+    def getTheta(self, optype):
         """Return call or put theta = time value per day."""
         assert optype in ['C', 'P'], AttributeError('Must be call or put!')
         if optype == 'C':
@@ -93,8 +93,8 @@ class BSModel():
                                  mode="lines", name="Put-Exp", line_color='#1756b1'), row=2, col=1)
         if preexpiry:
             for day in numday:
-                dfprice[f'{day}dayC'] = round(dfprice['spot'].apply(lambda x: BSModel(x, self.K, day, self.sig).cprice), 2)
-                dfprice[f'{day}dayP'] = round(dfprice['spot'].apply(lambda x: BSModel(x, self.K, day, self.sig).pprice), 2)
+                dfprice[f'{day}dayC'] = round(dfprice['spot'].apply(lambda x: BSModel(x, self.K, day, self.sig).cPrice), 2)
+                dfprice[f'{day}dayP'] = round(dfprice['spot'].apply(lambda x: BSModel(x, self.K, day, self.sig).pPrice), 2)
                 if opside == 'SHORT':
                     dfprice[f'{day}dayC'] *= -1
                     dfprice[f'{day}dayP'] *= -1
@@ -111,9 +111,9 @@ def getivbisect(S, K, T, P, optype, rf=0, lowb=0, upb=400.0, maxstep=20, pcterr=
     BSstart = BSModel(S, K, T, lowb / 100, rf)  # Lower estimate of original option price
     BSend = BSModel(S, K, T, upb / 100, rf)  # Upper estimate of original option price
     assert optype in ['C', 'P'], AttributeError('Must be call or put!')
-    lowprice = BSstart.getopprice(optype)
-    upprice = BSend.getopprice(optype)
-    assert ((P >= lowprice) and (P <= upprice)), AttributeError('IV should be between lower & upper bounds!')
+    lowprice = BSstart.getOpPrice(optype)
+    upPrice = BSend.getOpPrice(optype)
+    assert ((P >= lowprice) and (P <= upPrice)), AttributeError('IV should be between lower & upper bounds!')
 
     if (T == 0) or (P == abs(S - K)):
         sig = 0
@@ -124,15 +124,15 @@ def getivbisect(S, K, T, P, optype, rf=0, lowb=0, upb=400.0, maxstep=20, pcterr=
         # Loop of bisection method
         while step <= maxstep:
             # End iteration if upper bound & lower bound are within margin of error
-            diffprice = upprice - lowprice
+            diffprice = upPrice - lowprice
             if diffprice < pcterr * P:
                 break
             else:  # Take mid-point of current interval and cut interval in half
                 sig = (lowb + upb) / 2
-                newprice = BSModel(S, K, T, sig / 100, rf).getopprice(optype)
+                newprice = BSModel(S, K, T, sig / 100, rf).getOpPrice(optype)
                 if newprice > P:
                     upb = sig
-                    upprice = newprice
+                    upPrice = newprice
                 else:
                     lowb = sig
                     lowprice = newprice
