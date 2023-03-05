@@ -71,9 +71,9 @@ class BSModel():
     def getpayoff(self, numday=(7, 28, 56), Long=True, preExpiry=False):
         """Obtain payoff diagram at expiry and (if `preExpiry` enabled) payoff of each given days before expiry."""
         halfplus = lambda x: x if x > 0 else 0
-        lowb = self.K * (1 - self.sig / 2)
-        upb = self.K * (1 + self.sig / 2)
-        priceArray = np.linspace(lowb, upb, 100)
+        lowerBound = self.K * (1 - self.sig / 2)
+        upperBound = self.K * (1 + self.sig / 2)
+        priceArray = np.linspace(lowerBound, upperBound, 100)
         # Payoff Dataframe: call & put at expiry
         dfprice = pd.DataFrame(columns=['spot', 'expC', 'expP'])
         dfprice['spot'] = priceArray
@@ -108,36 +108,36 @@ class BSModel():
         fig.update_layout(height=800, showlegend=False, title_text=f'{side}-side Payoff curve', title_x=0.5)
         fig.show()
 
-def getivbisect(S, K, T, P, opType, rf=0, lowb=0, upb=400.0, maxstep=20, pcterr=0.001):
+def getIV(S, K, T, P, opType='C', rf=0, minIV=0, maxIV=400.0, maxStep=20, pctError=0.001):
     """Obtain an estimate of IV by bisection method."""
-    BSstart = BSModel(S, K, T, lowb / 100, rf)  # Lower estimate of original option price
-    BSend = BSModel(S, K, T, upb / 100, rf)  # Upper estimate of original option price
+    BSstart = BSModel(S, K, T, minIV / 100, rf)  # Lower estimate of original option price
+    BSend = BSModel(S, K, T, maxIV / 100, rf)  # Upper estimate of original option price
     assert opType in ['C', 'P'], AttributeError('Must be call or put!')
-    lowprice = BSstart.getOpPrice(opType)
-    upPrice = BSend.getOpPrice(opType)
-    assert ((P >= lowprice) and (P <= upPrice)), AttributeError('IV should be between lower & upper bounds!')
+    minPrice = BSstart.getOpPrice(opType)
+    maxPrice = BSend.getOpPrice(opType)
+    assert ((P >= minPrice) and (P <= maxPrice)), AttributeError('IV should be between lower & upper bounds!')
 
     if (T == 0) or (P == abs(S - K)):
         sig = 0
     else:
         # Initialize guess
         step = 1
-        sig = (lowb + upb) / 2
+        sig = (minIV + maxIV) / 2
         # Loop of bisection method
-        while step <= maxstep:
+        while step <= maxStep:
             # End iteration if upper bound & lower bound are within margin of error
-            diffprice = upPrice - lowprice
-            if diffprice < pcterr * P:
+            diffprice = maxPrice - minPrice
+            if diffprice < pctError * P:
                 break
             else:  # Take mid-point of current interval and cut interval in half
-                sig = (lowb + upb) / 2
-                newprice = BSModel(S, K, T, sig / 100, rf).getOpPrice(opType)
-                if newprice > P:
-                    upb = sig
-                    upPrice = newprice
+                sig = (minIV + maxIV) / 2
+                newPrice = BSModel(S, K, T, sig / 100, rf).getOpPrice(opType)
+                if newPrice > P:
+                    maxIV = sig
+                    maxPrice = newPrice
                 else:
-                    lowb = sig
-                    lowprice = newprice
+                    minIV = sig
+                    minPrice = newPrice
 
                 step += 1
 
