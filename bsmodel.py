@@ -143,42 +143,42 @@ def getIV(S, K, T, P, opType='C', rf=0, minIV=0, maxIV=400.0, maxStep=20, pctErr
 
     return round(sig, 2)
 
-def getoneopcurve(dfop, opfield, spotfield='ftclose', uptoexpiry=True):
-    """Obtain option price curve."""
+def getOptionTimecurve(dfOpPrice, priceField='price', spotField='ftClose', includeExpiry=True):
+    """Obtain option price curve depending on timestamp."""
     fig = make_subplots(rows=7, cols=1, shared_xaxes=True, vertical_spacing=0.05,
                         row_heights=[0.25, 0.15, 0.1, 0.1, 0.1, 0.1, 0.1], specs=[[{"type": "scatter"}]] * 7,
                         subplot_titles=("Option price", "Underlying", "IV", "Delta", "Theta", "Vega", "Gamma"))
     # Option price curve
-    fig.add_trace(go.Scatter(x=dfop.index, y=dfop[opfield],
+    fig.add_trace(go.Scatter(x=dfOpPrice.index, y=dfOpPrice[priceField],
                              mode="lines", name="Option Price", line_color='#43b117'), row=1, col=1)
 
     # Underlying Futures price curve
-    fig.add_trace(go.Scatter(x=dfop.index, y=dfop[spotfield],
+    fig.add_trace(go.Scatter(x=dfOpPrice.index, y=dfOpPrice[spotField],
                              mode="lines", name="Underlying", line_color='#1756b1'), row=2, col=1)
 
-    if uptoexpiry:  # The backtesting period includes the expiry date
+    if includeExpiry:  # The backtesting period includes the expiry date
         # Option IV curve
-        fig.add_trace(go.Scatter(x=dfop.index[:-1], y=dfop['sig'].iloc[:-1],
+        fig.add_trace(go.Scatter(x=dfOpPrice.index[:-1], y=dfOpPrice['sig'].iloc[:-1],
                                  mode="lines", name="IV", line_color='#b119b1'), row=3, col=1)
         # Theta curve
-        fig.add_trace(go.Scatter(x=dfop.index[:-1], y=dfop['theta'].iloc[:-1],
+        fig.add_trace(go.Scatter(x=dfOpPrice.index[:-1], y=dfOpPrice['theta'].iloc[:-1],
                                  mode="lines", name="Theta", line_color='#c50c47'), row=5, col=1)
     else:
         # Option IV curve
-        fig.add_trace(go.Scatter(x=dfop.index, y=dfop['sig'],
+        fig.add_trace(go.Scatter(x=dfOpPrice.index, y=dfOpPrice['sig'],
                                  mode="lines", name="IV", line_color='#b119b1'), row=3, col=1)
         # Theta curve
-        fig.add_trace(go.Scatter(x=dfop.index, y=dfop['theta'],
+        fig.add_trace(go.Scatter(x=dfOpPrice.index, y=dfOpPrice['theta'],
                                  mode="lines", name="Theta", line_color='#c50c47'), row=5, col=1)
     # Delta curve
-    fig.add_trace(go.Scatter(x=dfop.index, y=dfop['delta'],
+    fig.add_trace(go.Scatter(x=dfOpPrice.index, y=dfOpPrice['delta'],
                              mode="lines", name="Delta", line_color='#60dd34'), row=4, col=1)
     # Vega curve
-    fig.add_trace(go.Scatter(x=dfop.index, y=dfop['vega'],
+    fig.add_trace(go.Scatter(x=dfOpPrice.index, y=dfOpPrice['vega'],
                              mode="lines", name="Vega", line_color='#acdd34'), row=6, col=1)
 
     # Gamma curve
-    fig.add_trace(go.Scatter(x=dfop.index, y=dfop['gamma'],
+    fig.add_trace(go.Scatter(x=dfOpPrice.index, y=dfOpPrice['gamma'],
                              mode="lines", name="Gamma", line_color='#1956ee'), row=7, col=1)
 
     # Chart title
