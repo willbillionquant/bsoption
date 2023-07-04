@@ -68,7 +68,7 @@ class BSModel():
             t2 = self.rf * self.K * np.exp(- self.rf * self.T) * norm.cdf(- self.d2)
         return round((t1 + t2) / 365, 6)
 
-    def getpayoff(self, numday=(7, 28, 56), Long=True, preExpiry=False):
+    def getPayoff(self, numday=(7, 28, 56), Long=True, preExpiry=False):
         """Obtain payoff diagram at expiry and (if `preExpiry` enabled) payoff of each given days before expiry."""
         halfplus = lambda x: x if x > 0 else 0
         lowerBound = self.K * (1 - self.sig / 2)
